@@ -1,0 +1,27 @@
+<!-- HTML PAGE -->
+<html>
+    <head>
+    <title>Upload</title>
+    </head>
+
+    <!-- Include header info -->
+    <%- include ('./partials/header.ejs') %>
+
+    <body>
+        <h1>Upload Sounds</h1>
+        <p>Upload your sound here</p>
+
+        <form action="/uploadSound" enctype="multipart/form-data" method="POST">
+            <input type="file" class="admin__input" id="myFile" name="myFile" />
+            <input class="admin__submit" type="submit" />
+        </form>
+    </body>
+</html>
+
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+    crossorigin="anonymous">
+</script>
+
+<script type="text/javascript" src="/views/js/upload.js"></script>

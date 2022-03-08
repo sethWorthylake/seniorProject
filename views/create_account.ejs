@@ -1,0 +1,31 @@
+<!-- HTML PAGE -->
+<html>
+    <head>
+    <title>Create Account</title>
+    </head>
+
+    <!-- Include header info -->
+    <%- include ('./partials/header.ejs') %>
+
+    <body>
+        <h1>Create Account</h1>
+        <p>Enter Default Account Number Below</p>
+        <form action="">
+            <label for="default_account_name">Default Account Name:</label>
+            <input id="default_account_name" type="text"><br><br>
+            <label for="new_account_name">New Account Name:</label>
+            <input id="new_account_name" type="text"><br><br>
+            <label for="new_account_password">New Account Password:</label>
+            <input id="new_account_password" type="text"><br><br>
+            <button type="button" id="sendIt">Send Data</button>
+        </form>
+    </body>
+</html>
+
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+    crossorigin="anonymous">
+</script>
+
+<script type="text/javascript" src="/views/js/create_account.js"></script>
