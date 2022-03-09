@@ -1,4 +1,3 @@
-from pickle import TRUE
 from rfid_connection import rfid_connection
 from sql_connection import sql_connection
 from lcd_wrapper import lcd_wrapper
@@ -7,9 +6,13 @@ import string
 import random
 import time
 import os
+import sys
 
 def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
+
+working_dir = format(os.getcwd())
+sounds_dir = working_dir + "/public/files/"
 
 sql = sql_connection()
 rfid = rfid_connection()
@@ -42,8 +45,9 @@ def fill_sound_database():
 #takes RFID signal and returns account number
 def rfid_scan_handling():
     rfid_code = str(rfid.read())
-    user = sql.select_single_user_by_rfid_code(rfid_code)
+    sql.refresh_connection()
     lcd.clear_screen()
+    user = sql.select_single_user_by_rfid_code(rfid_code)
     if not user:
         lcd.display_string("Default Account",1)
         sql.insert_user(get_random_name(),get_sound_name(),rfid_code,"default")
@@ -52,9 +56,11 @@ def rfid_scan_handling():
         lcd.display_string("Welcome Back",1)
 
     lcd.display_string(user.name,2)
+
     try:
-        sound.play_sound(user.sound)
+        sound.play_sound(sounds_dir + user.sound)
     except Exception as e:
+        print("Failed to play sound")
         print(e)
     time.sleep(2)
 
@@ -63,6 +69,7 @@ def rfid_scan_handling():
 
 while True:
     print("Start MAIN HANDLER")
+    sys.stdout.flush()
     rfid_scan_handling()
     print("End MAIN HANDLER")
     rfid.clean_up()

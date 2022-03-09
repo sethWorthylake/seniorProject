@@ -37,32 +37,13 @@ class sound:
   pass
 
 class sql_connection:
-  def __init__(self, reset=0) -> None:
-    try:
-      self._connect("")
-      if reset:
-        self._reset()
-      self._create_database()
-      logging.debug("Database Created")
-    except Exception as e:
-      if not e.args[0].args[1] == _database_creation_error:
-        raise e
+  def __init__(self) -> None:
     self._connect()
-    
-    try:
-      self._create_table("sounds",_sounds_table_description) 
-      logging.debug("sounds table created")
-    except Exception as e: 
-      if not e.args[0].args[1] == _sounds_creation_error:
-        raise e
 
-    try:
-      self._create_table("users",_user_table_description) 
-      logging.debug("users table created")
-    except Exception as e:
-      if not e.args[0].args[1] == _users_creation_error:
-        raise e
-  
+  def refresh_connection(self):
+    self.connection.close()
+    self._connect()
+
   def _reset(self):
     self._drop_database()
     logging.debug("Database Dropped")
