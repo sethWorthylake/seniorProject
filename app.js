@@ -83,7 +83,6 @@ function sql_create_tables() {
                 table.integer('modifier').defaultTo(1)
                 table.boolean('is_default').defaultTo(true)
                 table.unique('name')
-                table.unique('sound')
                 table.unique('rfid_code')
             })
             .then(() => console.log("Users table created"))
@@ -118,6 +117,33 @@ function sql_select_all_sounds() {
             }
         }).catch((err) => { console.log( err); throw err }) 
 }
+
+function startPythonHandler()
+{
+    const pythonHandler = spawn('python3',['public/python/main_handler.py']);
+
+    pythonHandler.stdout.on('data', (data) => {
+        console.log("PYTHON HANDLER:")
+        console.log(`stdout: ${data}`);
+        console.log("")
+    });
+
+    pythonHandler.stderr.on('data', (data) => {
+        console.error(`PYTHON HANDLER stderr: ${data}`);
+    });
+
+    pythonHandler.on('close', (code) => {
+        console.log(`Handler exited with code: ${code}`);
+        if(code == 0)
+        {
+            startPythonHandler();
+        } else {
+            console.log("Handler Failed")
+        }
+    });
+}
+startPythonHandler();
+
 //set port
 const port = 3000;
 app.use(sessionParser);

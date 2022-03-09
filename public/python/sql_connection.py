@@ -26,6 +26,10 @@ _user_default_modifier = 1
 _user_values_names = "name, sound, rfid_code, password, admin, modifier, is_default"
 _user_values_format = "%s,%s,%s,%s,%s,%s,%s"
 
+_database_creation_error = "1007 (HY000): Can't create database 'attendance'; database exists"
+_sounds_creation_error = "1050 (42S01): Table 'sounds' already exists"
+_users_creation_error = "1050 (42S01): Table 'users' already exists"
+
 class user:
   pass
 
@@ -40,33 +44,25 @@ class sql_connection:
         self._reset()
       self._create_database()
       logging.debug("Database Created")
-    except: #TODO need to change it so that the error is that the database already exists and not that it just failed 
-      pass
+    except Exception as e:
+      if not e.args[0].args[1] == _database_creation_error:
+        raise e
     self._connect()
     
     try:
       self._create_table("sounds",_sounds_table_description) 
       logging.debug("sounds table created")
-    except:
-      pass
-    try:
-      self._setup_sounds()
-    except Exception as e:
-      logging.debug(e)
-      pass
+    except Exception as e: 
+      if not e.args[0].args[1] == _sounds_creation_error:
+        raise e
 
     try:
       self._create_table("users",_user_table_description) 
       logging.debug("users table created")
-    except:
-      pass
-    try:
-      self.insert_user(_user_default_name, _user_default_sound, _user_default_key, _user_default_password, _user_default_admin, _user_default_modifier)
-      logging.debug("user Seth created") #TODO MAKE SURE ALL OF THESE ARE THE CORRECT ERRORS
     except Exception as e:
-      logging.debug(e)
-      pass
-
+      if not e.args[0].args[1] == _users_creation_error:
+        raise e
+  
   def _reset(self):
     self._drop_database()
     logging.debug("Database Dropped")
@@ -206,8 +202,10 @@ class sql_connection:
     self._insert("sounds","name, size","%s,%s", (name, size))
 
   def _setup_sounds(self):
-    os.system("mkdir sounds")
-    os.system("cd sounds")
-    #os.system("rm *")
-    os.system("wget http://www.pacdv.com/sounds/people_sound_effects/applause-1.wav")
-    self.insert_sound("applause-1.wav", os.path.getsize("applause-1.wav"))
+    pass
+    #full_path = "/home/pi/ws/SeniorProject/public/files/"
+    #full_name = "applause-1.wav"
+    #full_command = "wget http://www.pacdv.com/sounds/people_sound_effects/applause-1.wav" 
+    #if not(os.path.exists(full_path + full_name)):
+        #os.system(full_command + " -P " + full_path)
+        #self.insert_sound(full_name, os.path.getsize(full_path + full_name))

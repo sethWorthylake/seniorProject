@@ -13,7 +13,6 @@ exports.up = function(knex) {
         table.integer('modifier').defaultTo(1)
         table.boolean('is_default').defaultTo(true)
         table.unique('name')
-        table.unique('sound')
         table.unique('rfid_code')
     });
 };

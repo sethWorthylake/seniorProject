@@ -1,3 +1,4 @@
+from pickle import TRUE
 from rfid_connection import rfid_connection
 from sql_connection import sql_connection
 from lcd_wrapper import lcd_wrapper
@@ -23,7 +24,12 @@ def get_random_name():
     return name
 
 def get_sound_name():
-    retval = sql.select_from_sounds()[0][1]
+    retval = ""
+    results = sql.select_from_sounds()
+    if(results):
+        if(results[0]):
+            retval = results[0][1]
+    
     return retval
 
 def fill_sound_database():
@@ -37,8 +43,9 @@ def fill_sound_database():
 def rfid_scan_handling():
     rfid_code = str(rfid.read())
     user = sql.select_single_user_by_rfid_code(rfid_code)
+    lcd.clear_screen()
     if not user:
-        lcd.display_string("New User",1)
+        lcd.display_string("Default Account",1)
         sql.insert_user(get_random_name(),get_sound_name(),rfid_code,"default")
         user = sql.select_single_user_by_rfid_code(rfid_code)
     else:
@@ -49,15 +56,13 @@ def rfid_scan_handling():
         sound.play_sound(user.sound)
     except Exception as e:
         print(e)
-    time.sleep(1)
+    time.sleep(2)
 
     #Log this into attendance log
     #RFID should wait for a second
-try:
-    while True:
-        print("Start")
-        rfid_scan_handling()
-        print("End")
-except KeyboardInterrupt:
+
+while True:
+    print("Start MAIN HANDLER")
+    rfid_scan_handling()
+    print("End MAIN HANDLER")
     rfid.clean_up()
-    raise

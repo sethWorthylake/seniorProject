@@ -16,3 +16,6 @@ class lcd_wrapper:
         self._check_input_string(string)
         self._check_input_int(line)
         self.display.lcd_display_string(string, line)
+    
+    def clear_screen(self):
+        self.display.lcd_clear()
