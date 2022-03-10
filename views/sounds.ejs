@@ -31,7 +31,12 @@
                     <th>Id</th>
                     <th>Name</th>
                     <th>Size</th>
-                    <th>Change to this Sound</th>
+                    <% if( loggedIn) { %>
+                        <th>Change to this Sound</th>
+                    <% } %>
+                    <% if( isAdmin) { %>
+                        <th>Delete this Sound</th>
+                    <% } %>
                 </tr>
                 
                 <%
@@ -40,10 +45,15 @@
                     soundData.forEach(function(data){
                 %>
                 <tr>
-                    <td><%=i; %></td>
+                    <td><%=data.id %></td>
                     <td><%=data.name %></td>
                     <td><%=data.size %> Bytes</td>
-                    <td><a href="/users/select/<%=data.id%>">Select</a></td>
+                    <% if( loggedIn) { %>
+                        <td><a href="/change_sound/<%=data.name%>">Select</a></td>
+                    <% } %>
+                    <% if( isAdmin) { %>
+                        <td><button id="deleteIt" value= <%=data.name %>>Delete</button></td>
+                    <% } %>
                 </tr>
                 <%  i++; }) %>
                 <% } else{ %>

@@ -163,54 +163,6 @@ app.get ('/', (req, res) => {
     res.render('index.ejs');
 })
 
-app.get ('/create_account', (req, res) => {
-    res.render('create_account.ejs');
-})
-
-app.get ('/login', (req, res) => {
-    if(req.session.loggedIn && (req.session.account_name != undefined))
-    {
-        knex.from('users').select("*").where('name',req.session.account_name)
-        .then((results) => {
-            if(results == 0)
-            {
-                //Fuck thats not good
-            } else {
-                var user = results[0];
-                let display_password = user.password.charAt(0);
-                for (let i = 1; i < user.password.length; i++) {
-                    display_password = display_password + "*";
-                }
-                
-                res.render('logged_in.ejs', {
-                    account_name: user.name,
-                    account_password: display_password,
-                    account_sound: user.sound
-                });
-            } 
-        }).catch((err) => { 
-            console.log(err);
-        })
-    } else {
-        res.render('login.ejs');
-    }
-})
-
-app.get ('/upload', (req, res) => {
-    res.render('upload.ejs');
-})
-
-app.get ('/sounds', (req, res) => {
-    knex.from('sounds').select("*")
-    .then((results) => {
-        res.render('sounds.ejs', {
-            soundData: results       
-        });
-    })
-    //should have some other case where it says it cant reach the sql data base
-})
-
-
 app.post('/sendPython', function(req, res) {
     //pull variable from body
     var pythonData = req.body.dataPython;
@@ -230,6 +182,10 @@ app.post('/sendPython', function(req, res) {
         lcdTest();
     //res.send("This is test?")
     res.send("hello")
+})
+
+app.get ('/create_account', (req, res) => {
+    res.render('create_account.ejs');
 })
 
 app.post('/account_create', function(req, res) {
@@ -287,6 +243,35 @@ app.post('/account_create', function(req, res) {
     }
 })
 
+app.get ('/login', (req, res) => {
+    if(req.session.loggedIn && (req.session.account_name != undefined))
+    {
+        knex.from('users').select("*").where('name',req.session.account_name)
+        .then((results) => {
+            if(results == 0)
+            {
+                //Fuck thats not good
+            } else {
+                var user = results[0];
+                let display_password = user.password.charAt(0);
+                for (let i = 1; i < user.password.length; i++) {
+                    display_password = display_password + "*";
+                }
+                
+                res.render('logged_in.ejs', {
+                    account_name: user.name,
+                    account_password: display_password,
+                    account_sound: user.sound
+                });
+            } 
+        }).catch((err) => { 
+            console.log(err);
+        })
+    } else {
+        res.render('login.ejs');
+    }
+})
+
 app.post('/login', function(req, res) {
     //pull variable from body
     console.log("Login Attempted:");
@@ -311,11 +296,16 @@ app.post('/login', function(req, res) {
                 error.push("Username doesn't exist");
             } else {
                 var user = result[0];
-                if(user.is_default == true) {
+                if(user.is_default) {
                     error.push("User is default");
                 } else if (user.password.toLowerCase() == account_password.toString().toLowerCase()) { 
                     req.session.loggedIn = true;
                     req.session.account_name = user.name;
+
+                    if(user.admin)
+                        req.session.isAdmin = true;
+                    else
+                        req.session.isAdmin = false;
                 } else {
                     error.push("Password Incorrect!");
                 }
@@ -398,23 +388,15 @@ app.post('/log_out', function(req,res) {
     res.send([]);
 })
 
-function lcdTest(){
-    const childPython = spawn('python',['public/python/pythonTest.py','turtle']);
-
-    childPython.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`);
-        //obj = JSON.parse(data)
-        //console.log(obj["awnser"])
-    });
-
-    childPython.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-    });
-
-    childPython.on('close', (code) => {
-        console.log(`child process exited with code: ${code}`);
-    });
-}
+app.get ('/upload', (req, res) => {
+    if(req.session.loggedIn && (req.session.account_name != undefined))
+    {
+        res.render('upload.ejs');
+    } else {
+        res.render('logged_out_upload.ejs');
+    }
+    
+})
 
 const isFileValid = (file) => {
     //var type = file.type.split("/").pop();
@@ -580,6 +562,119 @@ app.post('/uploadSound',async (req,res,next) => {
     });
 })
 
+app.get('/sounds', (req, res) => {
+    knex.from('sounds').select("*")
+    .then((results) => {
+        res.render('sounds.ejs', {
+            isAdmin: (req.session.isAdmin),
+            loggedIn: (req.session.loggedIn),
+            soundData: results       
+        });
+    })
+    //should have some other case where it says it cant reach the sql data base
+})
+
+app.post('/select_sound', function(req,res) {
+    console.log("Select Sound Attempted:");
+    var sound_name  = req.body.sound_name;
+    console.log(sound_name);
+    var error = [];
+
+    if(!sound_name)
+        error.push("No sound passed");
+    if(!req.session.loggedIn)
+        error.push("User is not logged in")
+    if(!req.session.account_name)
+        error.push("Account name not found")
+    
+    if(error.length == 0)
+    {
+        knex.from('sounds').select("*").where('name',sound_name)
+        .then(function(results){
+            if(results.length == 0)
+            {
+                error.push("Sound not found in Database");
+            } else {
+                knex.from('users').select('*').where('name', req.session.account_name)
+                .then(function(results){
+                    if(results.length == 0)
+                    {
+                        error.push("User not found in Database");
+                    } else {
+                        knex('users').where('name',req.session.account_name).update({
+                            sound: sound_name,
+                        }).catch((err) => { 
+                            error.push(err);
+                            res.send(error);
+                        });
+                        res.send(error);
+                    }
+                }).catch((err) => {
+                    error.push(err);
+                    res.send(error);
+                });
+            }
+        }).catch((err) => {
+            error.push(err);
+            res.send(error);
+        });
+        res.send(error);
+    } else {
+        console.log(error);
+        res.send(error);
+    }
+})
+
+app.get('/change_sound/:soundId?', function (req,res){
+    var sound_name = req.params.soundId;
+    console.log("Select Sound Attempted:");
+    console.log(sound_name);
+    var error = [];
+
+    if(!sound_name)
+        error.push("No sound passed");
+    if(!req.session.loggedIn)
+        error.push("User is not logged in")
+    if(!req.session.account_name)
+        error.push("Account name not found")
+    
+    if(error.length == 0)
+    {
+        knex.from('sounds').select("*").where('name',sound_name)
+        .then(function(results){
+            if(results.length == 0)
+            {
+                error.push("Sound not found in Database");
+            } else {
+                knex.from('users').select('*').where('name', req.session.account_name)
+                .then(function(results){
+                    if(results.length == 0)
+                    {
+                        error.push("User not found in Database");
+                    } else {
+                        knex('users').where('name',req.session.account_name).update({
+                            sound: sound_name,
+                        }).catch((err) => { 
+                            error.push(err);
+                        });
+                    }
+                }).catch((err) => {
+                    error.push(err);
+                });
+            }
+        }).catch((err) => {
+            error.push(err);
+            res.send(error);
+        });
+        res.send(error);
+    } else {
+        console.log(error);
+        res.send(error);
+    }
+
+    //TODO CONNECT THIS TO AN EVENT LISTNER
+});
+
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Senior Project App listening on port ${port}`)
 })
