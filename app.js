@@ -195,8 +195,11 @@ app.post('/account_create', function(req, res) {
     var new_account_password = req.body.new_account_password;
 
     console.log("Account Creation Attempted:");
+    console.log("Account Name")
     console.log(account_name);
+    console.log("New Account Name")
     console.log(new_account_name);
+    console.log("New Account Password")
     console.log(new_account_password);
 
     var error = [];
@@ -211,8 +214,7 @@ app.post('/account_create', function(req, res) {
 
     if(error.length == 0)
     {
-        knex.from('users').select("*").where('name',account_name)
-        .then((results) => {
+        knex.from('users').select("*").where('name',account_name).then(function (results){
             if(results.length == 0)
             {
                 error.push("User not found");
@@ -222,19 +224,27 @@ app.post('/account_create', function(req, res) {
                 {
                     error.push("User is not default");   
                 } else {
-                    knex('users').where('name',account_name)
-                    .update({
-                        name: new_account_name,
-                        password: new_account_password,
-                        is_default: false
-                    }).catch((err) => { 
+                    knex.from('users').select("*").where('admin', true).then(function (admins) {
+                        newAccountIsAdmin = (admins.length == 0);
+                        console.log("1Here")
+                        
+                        knex('users').where('name',account_name).update({
+                            name: new_account_name,
+                            password: new_account_password,
+                            is_default: false,
+                            admin: newAccountIsAdmin
+                        }).catch(function(err) { 
+                            error.push(err);
+                            res.send(error);
+                        });
+                    }).catch(function(err) {
                         error.push(err);
-                        res.send(error);
+                        res.send(error); 
                     });
                 }
-            }   
+            }
             res.send(error);
-        }).catch((err) => { 
+        }).catch(function (err) {
             error.push(err); 
             res.send(error);
         });
@@ -246,27 +256,7 @@ app.post('/account_create', function(req, res) {
 app.get ('/login', (req, res) => {
     if(req.session.loggedIn && (req.session.account_name != undefined))
     {
-        knex.from('users').select("*").where('name',req.session.account_name)
-        .then((results) => {
-            if(results == 0)
-            {
-                //Fuck thats not good
-            } else {
-                var user = results[0];
-                let display_password = user.password.charAt(0);
-                for (let i = 1; i < user.password.length; i++) {
-                    display_password = display_password + "*";
-                }
-                
-                res.render('logged_in.ejs', {
-                    account_name: user.name,
-                    account_password: display_password,
-                    account_sound: user.sound
-                });
-            } 
-        }).catch((err) => { 
-            console.log(err);
-        })
+        res.render('logged_in.ejs');
     } else {
         res.render('login.ejs');
     }
@@ -360,7 +350,7 @@ app.post('/modify_account',function(req,res) {
                     .update({
                         name: new_account_name,
                         password: new_account_password,
-                    }).catch((err) => { 
+                    }).catch(function (err) { 
                         error.push(err);
                         res.send(error);
                     });
@@ -383,6 +373,7 @@ app.post('/modify_account',function(req,res) {
 
 app.post('/log_out', function(req,res) {
     console.log("Logging Out");
+    req.session.isAdmin = false;
     req.session.loggedIn = false;
     req.session.account_name = undefined;
     res.send([]);
@@ -393,12 +384,12 @@ app.get ('/upload', (req, res) => {
     {
         res.render('upload.ejs');
     } else {
-        res.render('logged_out_upload.ejs');
+        res.render('upload_logged_out.ejs');
     }
     
 })
 
-const isFileValid = (file) => {
+function isFileValid(file) {
     //var type = file.type.split("/").pop();
     var type = file.mimetype.split("/").pop();
     const validTypes = ["mpeg", "wav"];
@@ -408,8 +399,8 @@ const isFileValid = (file) => {
     return true;
 };
 
-const cleanPublicSounds = (directory) => {
-    fs.readdir(directory, (err,files) => {
+function cleanPublicSounds(directory) {
+    fs.readdir(directory, function (err,files) {
         if(err)
             console.log(err);
         else {
@@ -424,14 +415,14 @@ const cleanPublicSounds = (directory) => {
     })
 }
 
-const syncPublicSounds = (directory) => {
-    fs.readdir(directory, (err, files) => {
+function syncPublicSounds(directory) {
+    fs.readdir(directory, function(err, files){
         if(err)
             console.log(err)
         else {
             files.forEach(file => {
                 knex.from('sounds').select("*").where('name', file)
-                .then((results) => {
+                .then(function(results) {
                     if(results.length == 0)
                     {
                         try {
@@ -505,7 +496,7 @@ app.post('/uploadSound', function (req,res){
                     // renames the file in the directory
                     //check if there is a file with the same name
                     var isFileThereAlready = false;
-                    fs.access(filepath, fs.constants.F_OK, (err) => {
+                    fs.access(filepath, fs.constants.F_OK, function (err) {
                         if(!err)
                             isFileThereAlready = true;
                     });
@@ -520,7 +511,7 @@ app.post('/uploadSound', function (req,res){
                         try {
                             // stores the fileName and size in the database
                             let fileSizePromise = new Promise(function(resolve) {
-                                fs.stat(filepath, (err, stats) => {
+                                fs.stat(filepath, function (err, stats) {
                                     if(err)
                                         console.log(err);
                                     else
@@ -531,7 +522,7 @@ app.post('/uploadSound', function (req,res){
                             knex('sounds').insert({
                                 name: fileName,
                                 size: await fileSizePromise 
-                            }).then(() => {
+                            }).then(function() {
                                 console.log("File Upload Worked");
                             
                             }).catch(function(err) {
@@ -557,7 +548,7 @@ app.post('/uploadSound', function (req,res){
 
 app.get('/sounds', (req, res) => {
     knex.from('sounds').select("*")
-    .then((results) => {
+    .then(function(results) {
         res.render('sounds.ejs', {
             isAdmin: (req.session.isAdmin),
             loggedIn: (req.session.loggedIn),
@@ -597,15 +588,15 @@ app.post('/select_sound', function(req,res) {
                     } else {
                         knex('users').where('name',req.session.account_name).update({
                             sound: sound_name,
-                        }).catch((err) => { 
+                        }).catch(function(err) { 
                             res.send(error);
                         });
                     }
-                }).catch((err) => {
+                }).catch(function(err) {
                     res.send(error);
                 });
             }
-        }).catch((err) => {
+        }).catch(function(err) {
             error.push(err);
             res.send(error);
         });
@@ -613,6 +604,45 @@ app.post('/select_sound', function(req,res) {
     } else {
         console.log(error);
         res.send(error);
+    }
+})
+
+app.get('/accounts', (req, res) => {
+    if(req.session.loggedIn && (req.session.account_name != undefined))
+    {
+        knex.from('users').select("*").where('name',req.session.account_name)
+        .then((results) => {
+            if(results == 0)
+            {
+                //Fuck thats not good
+            } else {
+                var user = results[0];
+                let display_password = user.password.charAt(0);
+                for (let i = 1; i < user.password.length; i++) {
+                    display_password = display_password + "*";
+                }
+               
+                if(user.admin)
+                {
+                    res.render('accounts_admin.ejs', {
+                        account_data: results,
+                        account_name: user.name,
+                        account_password: display_password,
+                        account_sound: user.sound
+                    });
+                } else {
+                    res.render('accounts.ejs', {
+                        account_name: user.name,
+                        account_password: display_password,
+                        account_sound: user.sound
+                    });
+                }
+            } 
+        }).catch(function(err) { 
+            console.log(err);
+        })
+    } else {
+        res.render('accounts_logged_out.ejs');
     }
 })
 

@@ -12,11 +12,11 @@
         <p>Must be a .wav or .mp3 and must be smaller than 5 MB</p>
         <br>
 
-        <form enctype="multipart/form-data" action="">
+        <!-- <form enctype="multipart/form-data" action="">
             <label for="file_name">Sound To Upload:</label>
             <input id="myFile" name="myFile" type="file">
             <button type="button" id="sendIt">Send Data</button>
-        </form>
+        </form> -->
 
         <form action="/uploadSound" enctype="multipart/form-data" method="post">
             <input type="file" class="admin__input" id="myFile" name="myFile" />

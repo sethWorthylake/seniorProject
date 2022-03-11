@@ -4,7 +4,7 @@ $("#sendIt").on("click", function login() {
         account_password: $("#account_password").val(),
     }).done(function(data) {
         if(data.length == 0) {
-            window.location.replace("/login")
+            window.location.replace("/accounts")
         } else { 
             showErrors(data)
         }

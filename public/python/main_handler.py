@@ -17,6 +17,7 @@ sounds_dir = working_dir + "/public/files/"
 sql = sql_connection()
 rfid = rfid_connection()
 lcd = lcd_wrapper()
+lcd.display_string("Awaiting Scan", 1)
 sound = sound_player()
 
 def get_random_name():
@@ -58,7 +59,10 @@ def rfid_scan_handling():
     lcd.display_string(user.name,2)
 
     try:
-        sound.play_sound(sounds_dir + user.sound)
+        if not user.sound:
+            print("User has no sound");
+        else:
+            sound.play_sound(sounds_dir + user.sound)
     except Exception as e:
         print("Failed to play sound")
         print(e)

@@ -1,0 +1,38 @@
+<!-- HTML PAGE -->
+<html>
+    <head>
+    <title>Accounts Logged In</title>
+    </head>
+
+    <!-- Include header info -->
+    <%- include ('./partials/header.ejs') %>
+
+    <body>
+        <h1>Account Info</h1>
+        <p>Name: <%= account_name %></p>
+        <p>Password: <%= account_password %></p>
+        <p>Sound: <%= account_sound %></p>
+
+        <h2>Account Modifications</h2>
+        <form action="">
+            <label for="new_account_name">New Account Name:</label>
+            <input id="new_account_name" type="text"><br><br>
+            <label for="new_account_password">New Password:</label>
+            <input id="new_account_password" type="text"><br><br>
+            
+            <label for="account_name">Current Account Name:</label>
+            <input id="account_name" type="text"><br><br>
+            <label for="account_password">Current Password:</label>
+            <input id="account_password" type="text"><br><br>
+            <button type="button" id="sendIt">Make Changes</button>
+        </form>
+    </body>
+</html>
+
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+    crossorigin="anonymous">
+</script>
+
+<script type="text/javascript" src="/views/js/accounts.js"></script>
