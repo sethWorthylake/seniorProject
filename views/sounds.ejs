@@ -1,0 +1,76 @@
+
+<!-- HTML PAGE -->
+<html>
+    <head>
+        <title>Sounds</title>
+    </head>
+
+    <!-- Include header info -->
+    <%- include ('./partials/header.ejs') %>
+    
+    <style>
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #DDD;
+        }
+
+        tr:hover {background-color: #D6EEEE;}
+    </style>
+
+    <body>
+        <div class="table-data">
+            <h2>Sounds Table</h2>
+            <table border="1px">
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Size</th>
+                    <% if( loggedIn) { %>
+                        <th>Change to this Sound</th>
+                    <% } %>
+                    <% if( isAdmin) { %>
+                        <th>Delete this Sound</th>
+                    <% } %>
+                </tr>
+                
+                <%
+                if(soundData.length!=0){
+                    var i=1;
+                    soundData.forEach(function(data){
+                %>
+                <tr>
+                    <td><%=data.id %></td>
+                    <td><%=data.name %></td>
+                    <td><%=data.size %> Bytes</td>
+                    <% if( loggedIn) { %>
+                        <td><button class="selectIt" value="<%=data.name %>">Select</button></td>
+                    <% } %>
+                    <% if( isAdmin) { %>
+                        <td><button class="deleteIt" value="<%=data.name %>">Delete</button></td>
+                    <% } %>
+                </tr>
+                <%  i++; }) %>
+                <% } else{ %>
+                    <tr>
+                        <td colspan="7">No Data Found</td>
+                    </tr>
+                <% } %>
+            </table>
+        </div>
+    </body>
+
+</html>
+
+<script
+    src="https://code.jquery.com/jquery-3.6.0.min.js"
+    integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+    crossorigin="anonymous">
+</script>
+
+<script type="text/javascript" src="/views/js/sounds.js"></script>
