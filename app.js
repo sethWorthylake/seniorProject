@@ -9,6 +9,7 @@ const formidable = require('formidable');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { rawListeners } = require('process');
+const uploadFolder = path.join(__dirname,'public','files')
 
 const knex = require('knex')({
   client: 'mysql',
@@ -442,7 +443,6 @@ app.post('/uploadSound', function (req,res){
     const form = new formidable.IncomingForm()
     console.log("UploadSound Attempt")
     
-    const uploadFolder = path.join(__dirname,'public','files')
     cleanPublicSounds(uploadFolder);
     syncPublicSounds(uploadFolder);
 
@@ -589,10 +589,77 @@ app.post('/select_sound', function(req,res) {
                         knex('users').where('name',req.session.account_name).update({
                             sound: sound_name,
                         }).catch(function(err) { 
+                            error.push(err); 
                             res.send(error);
                         });
                     }
                 }).catch(function(err) {
+                    error.push(err); 
+                    res.send(error);
+                });
+            }
+        }).catch(function(err) {
+            error.push(err);
+            res.send(error);
+        });
+        res.send(error);
+    } else {
+        console.log(error);
+        res.send(error);
+    }
+})
+
+app.post('/delete_sound', function(req,res) {
+    //var sound_name = req.params.id;
+    console.log("Delete Sound Attempted:");
+    var sound_name  = req.body.soundId;
+    console.log(sound_name);
+    var error = [];
+
+    if(!sound_name)
+        error.push("No sound passed");
+    if(!req.session.loggedIn)
+        error.push("User is not logged in")
+    if(!req.session.account_name)
+        error.push("Account name not found")
+    if(!req.session.isAdmin)
+        error.push("Account is not Admin")
+    
+    if(error.length == 0)
+    {
+        //is this sound in the db
+        knex.from('sounds').select("*").where('name',sound_name)
+        .then(function(results){
+            if(results.length == 0)
+            {
+                error.push("Sound not found in Database");
+            } else {
+                //is this user in the db
+                knex.from('users').select('*').where('name', req.session.account_name)
+                .then(function(results){
+                    if(results.length == 0)
+                    {
+                        error.push("User not found in Database");
+                    } else {
+                        //delete sound from db
+                        knex('sounds').where('name',sound_name).del()
+                        .then(function(){
+                            //update all users whose sound was deleted sound
+                            knex("users").where('sound',sound_name).update({
+                                sound: ''
+                            }).catch(function(err) {
+                                error.push(err); 
+                                res.send(error);
+                            });
+                            //Now update the sound directory deleting the bad stuff
+                            syncPublicSounds(uploadFolder);
+                        }).catch(function(err) {
+                            error.push(err); 
+                            res.send(error);
+                        });
+                    }
+                }).catch(function(err) {
+                    error.push(err); 
                     res.send(error);
                 });
             }
@@ -625,7 +692,7 @@ app.get('/accounts', (req, res) => {
                 if(user.admin)
                 {
                     res.render('accounts_admin.ejs', {
-                        account_data: results,
+                        accountData: results,
                         account_name: user.name,
                         account_password: display_password,
                         account_sound: user.sound

@@ -6,6 +6,21 @@
 
     <!-- Include header info -->
     <%- include ('./partials/header.ejs') %>
+    
+    <style>
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        }
+
+        th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #DDD;
+        }
+
+        tr:hover {background-color: #D6EEEE;}
+    </style>
 
     <body>
         <h1>ADMIN Account Info</h1>
@@ -28,7 +43,46 @@
         </form>
     
 <!-- Put all users here -->
+        <div class="table-data">
+            <h2>User Table</h2>
+            <table border="1px">
+                <tr>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Sound</th>
+                    <th>RFID code</th>
+                    <th>Password</th>
+                    <th>Admin</th>
+                    <th>Modifier</th>
+                    <th>Is Default</th>
+                    <th>Modify</th>
+                </tr>
+                
+                <%
+                if(accountData.length!=0){
+                    var i=1;
+                    accountData.forEach(function(data){
+                %>
+                <tr>
+                    <td><%=data.id %></td>
+                    <td><%=data.name %></td>
+                    <td><%=data.sound %></td>
+                    <td><%=data.rfid_code %></td>
+                    <td><%=data.password %></td>
+                    <td><%=data.admin %></td>
+                    <td><%=data.modifier %></td>
+                    <td><%=data.is_default %></td>
+                    <td><button class="sendIt" value="<%=data.name %>">Modify</button></td>
 
+                </tr>
+                <%  i++; }) %>
+                <% } else{ %>
+                    <tr>
+                        <td colspan="7">No Data Found</td>
+                    </tr>
+                <% } %>
+            </table>
+        </div>
 
     </body>
 </html>
